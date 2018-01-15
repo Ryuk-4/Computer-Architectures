@@ -14,9 +14,9 @@ reset_handler
 		CMP R0,R1
 		;R8 = R0 + R1 if R0 != R1
 		ADDNE R8, R0, R1
-		;Check the same flag -> if R0 != R1, then divide it by 2
+		;if R0 != R1, then divide it by 2
 		LSRNE R8, R8, #1 ; -> right shift if not equal
-		;Check the same flag -> if R0 = R1, then multiply them
+		;if R0 = R1, then multiply them
 		MULEQ R8, R0, R1
 ;;
 ;;
@@ -36,5 +36,5 @@ reset_handler
 		LSRNE R11, R11, #1
 		MULEQ R11, R6, R7
 
-	B reset_handler
-	END
+B reset_handler
+		END
