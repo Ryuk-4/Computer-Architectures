@@ -1,4 +1,4 @@
-	AREA RESET, CODE, READONLY
+	AREA myCode, CODE, READONLY
 		  
 reset_handler
 		ENTRY
