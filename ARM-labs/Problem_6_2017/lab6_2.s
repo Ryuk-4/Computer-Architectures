@@ -1,11 +1,10 @@
-		AREA myCode, READONLY, CODE
-		ENTRY
-
+	AREA myCode, READONLY, CODE
+		
 reset_handler
-
+	ENTRY
 		LDR R0, =3
 		LDR R1, =2
-		LDR R2, =1
+		LDR R2, =6
 ;		R3 temp register
 		EOR R4, R4 	;Result1
 		EOR R5, R5	;Result2
@@ -28,9 +27,13 @@ reset_handler
 		MOVHI R1, R2
 		MOVHI R2, R8
 
+		CMP R0, R1
+		MOVHI R8, R0
+		MOVHI R0, R1
+		MOVHI R1, R8
 
 		MOV R3, R1
-LOOP1:
+LOOP1
 		SUB R3, R3, R0
 		ADD R6, #1
 		CMP R0, R3
@@ -39,17 +42,20 @@ LOOP1:
 		BNE Continue1 ;jump if R3 != 0
 		MOV R4, R6	;I'm here if R1 is multiplier of R0
 
-Continue1:
+Continue1
 		MOV R3, R2
-LOOP2:
+LOOP2
 		SUB R3, R3, R0
 		ADD R7, #1
 		CMP R0, R3
-		BHI LOOP2
+		BLS LOOP2
 		CMP R3, #0
 		BNE Continue2
 		MOV R5, R7
-Continue2:
-
+Continue2
+	   ;Clean temp registers
+	   EOR R6, R6
+	   EOR R7, R7
+	   EOR R8, R8
 	B reset_handler
 		END

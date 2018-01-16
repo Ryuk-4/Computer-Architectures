@@ -1,11 +1,12 @@
-		AREA myCode, READONLY, CODE
-		ENTRY
+	AREA RESET, CODE, READONLY
+		  
 reset_handler
+		ENTRY
 
 		LDR R0, =1
 		LDR R1, =2
 		LDR R2, =3
-		LDR R3, =4
+		LDR R3, =3
 		LDR R4, =5
 		LDR R5, =6
 		LDR R6, =7
@@ -36,5 +37,5 @@ reset_handler
 		LSRNE R11, R11, #1
 		MULEQ R11, R6, R7
 
-B reset_handler
+		B reset_handler
 		END
