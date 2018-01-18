@@ -107,20 +107,20 @@ FIQ_Handler     B       FIQ_Handler
 ;SWI management
 SWI_Handler
 				STMFD 	sp!, {r0-r5, r7-r12, lr} ;Store registers in the stack and store the link register
-        ;r6 will contain the result if there will be OVERFLOW
+        		;r6 will contain the result if there will be OVERFLOW
 				LDR r0, [lr, #-4] ;lr is pointing to the next instruction after the swi
 				BIC 	r1, r0, #0xff000000  ;BIC dest, op1, op2 -> dest = op1 AND !(op2)
 				; test the identification code of the interrupt
 				CMP 	r1, #0x10
-        BNE secondCode
+        		BNE secondCode
 
-        MOV R6, #0x7FFFFFFF
-        B end_swi
+        		MOV R6, #0x7FFFFFFF
+        		B end_swi
 
 secondCode
-        CMP R1, #0x20
-        BNE 	end_swi
-        MOV R6, #0x80000000
+        		CMP R1, #0x20
+        		BNE 	end_swi
+       			MOV R6, #0x80000000
 
 end_swi			LDMFD 	sp!, {r0-r5, r7-r12, pc}^ ;Restore the registers and put LR into PC so the Program
                                        ;can continue.
@@ -181,11 +181,70 @@ Reset_Handler
 literal1 DCD 0x10, 0x70000000, 0xFFFFFFE0, 0x800000F0, 0x100EC023
 literal2 DCD 0x200, 0x12345678, 0xE00A1238, 0xF0004538, 0xE9800348
 N EQU 5
+		  ;R0 <- addr of the result
+		  ;R1 <- iteration counter
+		  ;R2 <- index of literal1
+		  ;R3 <- index of literal2
+		  ;R4 <- i-th value of literal1
+		  ;R5 <- i-th value of literal2
+		  ;R6 <- result of the interrupt
+		  ;R7 <- sign of operand1
+		  ;R8 <- sign of operand2
+		  ;R9 <- sum of R4 & R5
+		  ;R10 <- sign of the sum
+          LDR R0, =result 
+		  
+		  MOV R1, #0 ; counter = 0
+		  
+		  LDR R2, =literal1
+		  LDR R3, =literal2
+		  
+cycle
+		  LDR R4, [R2]
+		  LDR R5, [R3]
+		  
+		  BIC R7, R4, #0x7FFFFFFF ;R7 = R4 AND 0x80000000
+		  CMP R7, #0x80000000
+		  BEQ OP1_Neg
+		  BIC R8, R5, #0x7FFFFFFF ;R8 = R5 AND 0x80000000
+		  CMP R8, #0x80000000
+		  BEQ OP2_Neg
 
-          LDR R0, =result
-			    SWI #0x10
+bothPositive
+		  ADD R9, R4, R5
+		  BIC R10, R9, #0x7FFFFFFF
+		  CMP R10, #0x80000000	  
+		  BNE No_Overflow			
+		  SWI #0x10
+		  B Overflow
 
-				B Reset_Handler
+OP1_Neg
+		  BIC R8, R5, #0x7FFFFFFF ;R8 = R5 AND 0x80000000
+		  CMP R8, #0x80000000
+		  BEQ bothNegative
+OP2_Neg
+		  ADD R9, R4, R5
+		  B No_Overflow
+
+bothNegative
+		  ADD R9, R4, R5
+		  BIC R10, R9, #0x7FFFFFFF
+		  CMP R10, #0
+		  BNE No_Overflow
+		  SWI #0x20
+		  B Overflow
+No_Overflow
+		  STR R9, [R0], #4
+		  B nextIteration
+Overflow
+		  STR R6, [R0], #4
+nextIteration
+		  ADD R1, R1, #1
+		  ADD R2, R2, #4
+		  ADD R3, R3, #4		  
+		  CMP R1, #N
+		  BEQ Reset_Handler 
+		  B cycle
 
 
                 END

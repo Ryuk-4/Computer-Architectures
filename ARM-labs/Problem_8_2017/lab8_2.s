@@ -98,24 +98,52 @@ DAbt_Addr       DCD     DAbt_Handler
 IRQ_Addr        DCD     IRQ_Handler
 FIQ_Addr        DCD     FIQ_Handler
 
-Undef_Handler   B       Undef_Handler
+Undef_Handler   
+				STMFD 	sp!, {r0-r11, lr}		;storing registers and the Link Register
+												;R12 is not stored because it will contain the result
+				LDR r0, [lr, #-4]
+				
+				BIC R1, R0, #0xFFFF00FF			;immediate divisor
+				LSR R1, R1, #8					;0x00000500 becomes 0x00000005
+				
+				BIC R2, R0, #0xFFFFFFF0
+
+				LDR R3, [SP, R2, LSL #2]
+
+				;R1 <- Divisor => 5
+				;R2 <- Register number
+				;R3 <- Dividend => 26
+				;R12 <- Result
+
+				MOV R12, #0
+
+division
+				CMP R3, R1
+				BLO endDivision
+				SUB R3, R3, R1
+				ADD R12, R12, #1
+				B division
+endDivision
+			    LDMFD 	sp!, {r0-r11, pc}^
+				B Reset_Handler
+
 PAbt_Handler    B       PAbt_Handler
 DAbt_Handler    B       DAbt_Handler
 IRQ_Handler     B       IRQ_Handler
 FIQ_Handler     B       FIQ_Handler
 
+
 ;SWI management
 SWI_Handler	
-				STMFD 	sp!, {r0-r12, lr}
-				LDR r0, [lr, #-4]
-				BIC 	r1, r0, #0xff000000
+	STMFD 	sp!, {r0-r12, lr} ;Store registers in the stack and store the link register
+        		;r6 will contain the result if there will be OVERFLOW
+				LDR r0, [lr, #-4] ;lr is pointing to the next instruction after the swi
+				BIC 	r1, r0, #0xff000000  ;BIC dest, op1, op2 -> dest = op1 AND !(op2)
 				; test the identification code of the interrupt
 				CMP 	r1, #0x10
-				BNE 	end_swi
-
-				; your action here 
-
-end_swi			LDMFD 	sp!, {r0-r12, pc}^
+				BNE end_swi
+end_swi			LDMFD 	sp!, {r0-r12, pc}^ ;Restore the registers and put LR into PC so the Program
+                                       ;can continue.
 
 
 ; Reset Handler
@@ -168,9 +196,9 @@ Reset_Handler
               
 
 ; main program starts here.
-; The interrupt service routine with identification code 10h is called
-			    SWI #0x10
-               
+				MOV R6, #26
+DIVr6BY5 DCD 0x77F005F6
+
 				B Reset_Handler
 
 
