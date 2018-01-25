@@ -3,9 +3,9 @@
 	    LDR PC, =reset_handler
  
 
-;costantValues DCD 1, 2, 3, 4, 5, 6, 7, 8 ;; increasing sequence
+costantValues DCD 1, 2, 3, 4, 5, 6, 7, 8 ;; increasing sequence
 ;costantValues DCD 80, 70, 60, 50, 40, 30, 20, 10  ;; decreasing sequence
-costantValues DCD 1, 10, 2, 20, 3, 30, 4, 40		;; not monotonic sequence
+;costantValues DCD 1, 10, 2, 20, 3, 30, 4, 40		;; not monotonic sequence
 
 reset_handler
 
@@ -22,7 +22,7 @@ reset_handler
 	MOV R4, #1 ;index
 	LDR R1, [R0] ; R1 <- 1st elem of costantValues
 	;R2 <- 2nd elem of costantValues
-	LDR R2, [R0, R4, LSL #2] ;R0 <- R3 * 4
+	LDR R2, [R0, R4, LSL #2] ;R0 + R4 * 4
 	CMP R1, R2
 	BHI DECREASING ; jump if R1 > R2
 	MOV R5, R1
@@ -39,13 +39,13 @@ INCREASING
 	ADD R10, #1 ;Next iteration
 	CMP	R10, #7
 	BNE INCREASING
-	LSR R5, R5, #3 ;Division by 8
+	LSR R5, R5, #3 ;Division by 2^3=8
 	B END_
 DECREASING
 	SUB R5, R1, R2	;I'm here iff R1 > R2
 	CMP R5, R6	;R5 > R6
 	MOVHI R6, R5
-	MOV R1, R2
+	MOV R1, R2	 ;in order to preserve R2 for the next iteration
 	ADD R4, #1
 	LDR R2, [R0, R4, LSL #2] ; R2 <- next element
 	CMP R1, R2
@@ -55,16 +55,16 @@ DECREASING
 	BNE DECREASING
 	B END_
 NOT_MONOTONIC
-	MOV R7, R1 ; MAX
-	MOV R8, R1 ; min
+	MOV R7, R1 ; MAX --> Set the MAX equal to the 1st element
+	MOV R8, R1 ; min --> As above for the min
 	SUB R4, R4, #1; since it was incremented into previous label
 CYCLE
 	LDR R2, [R0, R4, LSL #2] ; R2 <- next element
-	CMP R2, R7
-	MOVHI R7, R2 
-	CMP R2, R8
-	MOVLS R8, R2
-	ADD R4, #1	
+	CMP R2, R7	 ; ? R2 > MAX ?
+	MOVHI R7, R2 ;if so, set the new Max
+	CMP R2, R8	 ; ? R2 < min ?
+	MOVLS R8, R2 ; if so, set the new min
+	ADD R4, #1	 ;prepare for the next iteration
 	ADD R10, #1
 	CMP R10, #8
 	BNE	 CYCLE

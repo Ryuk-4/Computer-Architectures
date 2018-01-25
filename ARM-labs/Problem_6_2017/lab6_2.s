@@ -32,6 +32,7 @@ reset_handler
 		MOVHI R0, R1
 		MOVHI R1, R8
 
+		;Computing 	R1/R0
 		MOV R3, R1
 LOOP1
 		SUB R3, R3, R0
@@ -43,6 +44,7 @@ LOOP1
 		MOV R4, R6	;I'm here if R1 is multiplier of R0
 
 Continue1
+		;Computing R2/R0
 		MOV R3, R2
 LOOP2
 		SUB R3, R3, R0
@@ -51,7 +53,7 @@ LOOP2
 		BLS LOOP2
 		CMP R3, #0
 		BNE Continue2
-		MOV R5, R7
+		MOV R5, R7	  ;I'm here if R2 is multiplier of R0
 Continue2
 	   ;Clean temp registers
 	   EOR R6, R6
